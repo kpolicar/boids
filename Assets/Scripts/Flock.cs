@@ -7,7 +7,6 @@ public class Flock : MonoBehaviour
 {
     public FlockBehavior behavior;
     public FlockAgent agentPrefab;
-    public FlockAgent dragonPrefab;
     public List<FlockAgent> agents = new List<FlockAgent>();
 
     [Range(10, 500)]
@@ -39,18 +38,6 @@ public class Flock : MonoBehaviour
             newAgent.Initialize(this);
             agents.Add(newAgent);
         }
-
-        if (dragonPrefab != null) {
-            FlockAgent newAgent = Instantiate(
-                dragonPrefab,
-                Random.insideUnitCircle * (startingCount * AgentDensity),
-                Quaternion.Euler(Vector3.forward * Random.Range(0f, 360f)),
-                transform
-            );
-            newAgent.name = "Dragon";
-            newAgent.Initialize(this);
-            agents.Add(newAgent);
-        }
     }
 
     public void Add(Transform destination) {
@@ -66,6 +53,7 @@ public class Flock : MonoBehaviour
     }
 
     void Update() {
+        var deleted = new List<FlockAgent>();
         foreach (var agent in agents) {
             var context = GetNearbyObjects(agent);
             var move = (Vector2) agent.transform.up + behavior.CalculateMove(agent, context, this);
@@ -77,8 +65,10 @@ public class Flock : MonoBehaviour
             agent.ParseContext(context);
             agent.Move(move);
             if (agent.deleted) 
-                agents.Remove(agent);
+                deleted.Add(agent);
         }
+
+        agents.RemoveAll(agent => deleted.Contains(agent));
     }
 
     private List<Transform> GetNearbyObjects(FlockAgent agent) {
